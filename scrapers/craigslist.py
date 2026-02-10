@@ -2,6 +2,7 @@
 
 import hashlib
 import logging
+import random
 import re
 import time
 from datetime import datetime, timezone
@@ -72,11 +73,14 @@ class CraigslistScraper:
         """Fetch and parse Craigslist listings for all target neighborhoods."""
         all_listings = []
 
-        for hood_name, hood_term in CL_NEIGHBORHOOD_TERMS.items():
+        for i, (hood_name, hood_term) in enumerate(CL_NEIGHBORHOOD_TERMS.items()):
             try:
                 listings = self._scrape_neighborhood(hood_name, hood_term)
                 all_listings.extend(listings)
-                time.sleep(2)  # Be polite between requests
+                if i < len(CL_NEIGHBORHOOD_TERMS) - 1:
+                    delay = random.uniform(3, 7)
+                    logger.info("Waiting %.1fs before next Craigslist request...", delay)
+                    time.sleep(delay)
             except Exception:
                 logger.exception("Error scraping Craigslist for %s", hood_name)
 

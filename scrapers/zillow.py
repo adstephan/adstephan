@@ -3,6 +3,7 @@
 import hashlib
 import json
 import logging
+import random
 import re
 import time
 from datetime import datetime, timezone
@@ -51,12 +52,24 @@ class ZillowScraper:
     def scrape(self):
         """Attempt to scrape Zillow listings for all neighborhoods."""
         all_listings = []
+        backoff = 5  # initial backoff in seconds
 
-        for hood_name, hood_slug in config.ZILLOW_NEIGHBORHOODS.items():
+        for i, (hood_name, hood_slug) in enumerate(config.ZILLOW_NEIGHBORHOODS.items()):
             try:
                 listings = self._scrape_neighborhood(hood_name, hood_slug)
-                all_listings.extend(listings)
-                time.sleep(3)
+                if listings is None:
+                    # Got blocked — increase backoff and wait before retrying others
+                    backoff = min(backoff * 2, 120)
+                    delay = backoff + random.uniform(0, backoff * 0.5)
+                    logger.info("Backing off %.1fs after Zillow block...", delay)
+                    time.sleep(delay)
+                else:
+                    all_listings.extend(listings)
+                    backoff = 5  # reset on success
+                if i < len(config.ZILLOW_NEIGHBORHOODS) - 1:
+                    delay = random.uniform(5, 12)
+                    logger.info("Waiting %.1fs before next Zillow request...", delay)
+                    time.sleep(delay)
             except Exception:
                 logger.exception("Error scraping Zillow for %s", hood_name)
 
@@ -64,7 +77,7 @@ class ZillowScraper:
         return all_listings
 
     def _scrape_neighborhood(self, hood_name, hood_slug):
-        """Scrape listings for a single neighborhood."""
+        """Scrape listings for a single neighborhood. Returns None on block."""
         url = self.build_search_url(hood_slug)
         logger.info("Scraping Zillow: %s", url)
 
@@ -75,7 +88,7 @@ class ZillowScraper:
                     "Zillow returned 403 for %s — site may be blocking scrapers",
                     hood_name,
                 )
-                return []
+                return None
             resp.raise_for_status()
         except requests.RequestException:
             logger.exception("Failed to fetch Zillow %s", url)
