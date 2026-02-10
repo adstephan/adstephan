@@ -46,4 +46,4 @@ DATABASE_PATH = "listings.db"
 
 # Flask
 FLASK_HOST = "0.0.0.0"
-FLASK_PORT = 5000
+FLASK_PORT = 8080
