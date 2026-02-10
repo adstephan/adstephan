@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BK Apartment Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>BK Apartment Finder</h1>
+            <p class="subtitle">1-2 BR apartments up to $4,000/mo in Brooklyn</p>
+        </div>
+        <div class="header-actions">
+            <span class="last-updated" id="lastUpdated">Loading...</span>
+            <button class="btn btn-refresh" id="refreshBtn" title="Refresh listings">
+                &#x21bb; Refresh
+            </button>
+        </div>
+    </header>
+
+    <nav class="quick-links">
+        <h2>Search Directly</h2>
+        <div class="link-groups">
+            {% for hood in neighborhoods %}
+            <div class="link-group">
+                <h3>{{ hood }}</h3>
+                <div class="source-links">
+                    <a href="{{ streeteasy_urls.get(hood, '#') }}" target="_blank" rel="noopener"
+                       class="source-badge streeteasy">StreetEasy</a>
+                    <a href="{{ zillow_urls.get(hood, '#') }}" target="_blank" rel="noopener"
+                       class="source-badge zillow">Zillow</a>
+                    <a href="{{ url_for('api_search_links') }}" target="_blank" rel="noopener"
+                       class="source-badge craigslist"
+                       data-hood="{{ hood }}" data-source="craigslist">Craigslist</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </nav>
+
+    <main>
+        <section class="stats-bar" id="statsBar">
+            <div class="stat">
+                <span class="stat-value" id="totalListings">—</span>
+                <span class="stat-label">Total Listings</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="clCount">—</span>
+                <span class="stat-label">Craigslist</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="seCount">—</span>
+                <span class="stat-label">StreetEasy</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="zilCount">—</span>
+                <span class="stat-label">Zillow</span>
+            </div>
+        </section>
+
+        <section class="filters">
+            <div class="filter-group">
+                <label for="filterNeighborhood">Neighborhood</label>
+                <select id="filterNeighborhood">
+                    <option value="">All Neighborhoods</option>
+                    {% for hood in neighborhoods %}
+                    <option value="{{ hood }}">{{ hood }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterSource">Source</label>
+                <select id="filterSource">
+                    <option value="">All Sources</option>
+                    <option value="craigslist">Craigslist</option>
+                    <option value="streeteasy">StreetEasy</option>
+                    <option value="zillow">Zillow</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterBedrooms">Bedrooms</label>
+                <select id="filterBedrooms">
+                    <option value="">Any</option>
+                    <option value="1">1 BR</option>
+                    <option value="2">2 BR</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterMaxPrice">Max Price</label>
+                <input type="range" id="filterMaxPrice" min="1000" max="4000" step="100" value="4000">
+                <span id="priceDisplay">$4,000</span>
+            </div>
+            <div class="filter-group">
+                <label for="filterSort">Sort By</label>
+                <select id="filterSort">
+                    <option value="date_scraped-desc">Newest First</option>
+                    <option value="date_scraped-asc">Oldest First</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="listings" id="listingsContainer">
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <p>Loading listings...</p>
+            </div>
+        </section>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <h3>No listings found</h3>
+            <p>Try adjusting your filters or click Refresh to fetch new listings.</p>
+            <p>You can also search directly on the source sites using the links above.</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>
+            Apartment Finder &mdash; Searching
+            <strong>Gowanus, Fort Greene, Carroll Gardens, Greenpoint, Bed-Stuy, Clinton Hill</strong>
+            &mdash; Budget: up to <strong>${{ max_price|int }}/mo</strong>
+            &mdash; {{ min_bedrooms }}-{{ max_bedrooms }} bedrooms
+        </p>
+        <p class="footer-note">
+            Data sourced from
+            <a href="https://newyork.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>,
+            <a href="https://streeteasy.com/" target="_blank" rel="noopener">StreetEasy</a>, and
+            <a href="https://www.zillow.com/" target="_blank" rel="noopener">Zillow</a>.
+            Auto-refreshes every {{ 30 }} minutes.
+        </p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

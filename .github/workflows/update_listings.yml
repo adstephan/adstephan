@@ -1,0 +1,32 @@
+name: Update Apartment Listings
+
+on:
+  schedule:
+    # Run every 30 minutes
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scrapers
+        run: python update_listings.py
+
+      - name: Upload listings database
+        uses: actions/upload-artifact@v4
+        with:
+          name: listings-db
+          path: listings.db
+          retention-days: 7
